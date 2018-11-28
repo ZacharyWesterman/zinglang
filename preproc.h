@@ -5,5 +5,6 @@
 class preproc : public z::compiler::preprocTags
 {
 public:
-	bool include(z::core::string<>& prefix, z::core::string<>& postfix);
+	// z::core::string<> directive() const;
+	z::core::string<> directend() const;
 };
