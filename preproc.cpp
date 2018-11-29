@@ -1,11 +1,11 @@
 #include "preproc.h"
 
-z::core::string<> preproc::directive() const
+zstring preproc::directive() const
 {
 	return "#";
 }
 
-z::core::string<> preproc::directend() const
+zstring preproc::directend() const
 {
 	return "[;$]";
 }
