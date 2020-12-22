@@ -28,7 +28,7 @@ driver::driver ()
 }
 
 int
-driver::parse (const std::string &f)
+driver::parse (const z::core::string<z::utf8> &f)
 {
   file = f;
   location.initialize (&file);

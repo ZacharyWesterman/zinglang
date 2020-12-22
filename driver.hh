@@ -19,7 +19,7 @@
 
 #ifndef DRIVER_HH
 # define DRIVER_HH
-# include <string>
+# include <z/core/string.hpp>
 # include <map>
 # include "parser.hh"
 
@@ -35,14 +35,14 @@ class driver
 public:
   driver ();
 
-  std::map<std::string, int> variables;
+  std::map<z::core::string<z::utf8>, int> variables;
 
   int result;
 
   // Run the parser on file F.  Return 0 on success.
-  int parse (const std::string& f);
+  int parse (const z::core::string<z::utf8>& f);
   // The name of the file being parsed.
-  std::string file;
+  z::core::string<z::utf8> file;
   // Whether to generate parser debug traces.
   bool trace_parsing;
 

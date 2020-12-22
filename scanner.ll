@@ -22,7 +22,7 @@
 # include <climits>
 # include <cstdlib>
 # include <cstring> // strerror
-# include <string>
+# include <z/core/string.hpp>
 # include "driver.hh"
 # include "parser.hh"
 %}
@@ -95,7 +95,7 @@
 %{
   // A number symbol corresponding to the value in S.
   yy::parser::symbol_type
-  make_NUMBER (const std::string &s, const yy::parser::location_type& loc);
+  make_NUMBER (const z::core::string<z::utf8> &s, const yy::parser::location_type& loc);
 %}
 
 id    [a-zA-Z][a-zA-Z_0-9]*
@@ -134,12 +134,12 @@ blank [ \t\r]
 %%
 
 yy::parser::symbol_type
-make_NUMBER (const std::string &s, const yy::parser::location_type& loc)
+make_NUMBER (const z::core::string<z::utf8> &s, const yy::parser::location_type& loc)
 {
   errno = 0;
-  long n = strtol (s.c_str(), NULL, 10);
+  long n = s.integer();
   if (! (INT_MIN <= n && n <= INT_MAX && errno != ERANGE))
-    throw yy::parser::syntax_error (loc, "integer is out of range: " + s);
+    throw yy::parser::syntax_error (loc, "integer is out of range: " + std::string(s.cstring()));
   return yy::parser::make_NUMBER ((int) n, loc);
 }
 
@@ -147,11 +147,11 @@ void
 driver::scan_begin ()
 {
   yy_flex_debug = trace_scanning;
-  if (file.empty () || file == "-")
+  if (!file.length() || (file == "-"))
     yyin = stdin;
-  else if (!(yyin = fopen (file.c_str (), "r")))
+  else if (!(yyin = fopen (file.cstring(), "r")))
     {
-      std::cerr << "cannot open " << file << ": " << strerror (errno) << '\n';
+      std::cerr << "cannot open " << file.cstring() << ": " << strerror (errno) << '\n';
       exit (EXIT_FAILURE);
     }
 }

@@ -19,7 +19,7 @@ all: $(BASE)
 	$(CXX) $(CXXFLAGS) -c -o$@ $<
 
 $(BASE): $(BASE).o driver.o parser.o scanner.o
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ -lzed
 
 $(BASE).o: parser.hh
 parser.o: parser.hh
