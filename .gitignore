@@ -1,5 +1,6 @@
 calc++
 *.o
+*.html
 parser.cc
 parser.hh
 parser.xml
