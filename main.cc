@@ -12,9 +12,7 @@ int main(int argc, char *argv[])
 			drv.trace_parsing = true;
 		else if (param == "-s")
 			drv.trace_scanning = true;
-		else if (!drv.parse (argv[i]))
-			std::cout << drv.result << '\n';
-		else
+		else if (drv.parse (argv[i]))
 			res = 1;
 	}
 	return res;

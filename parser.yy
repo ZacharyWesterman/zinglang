@@ -36,9 +36,13 @@
 	SLASH	"/"
 	LPAREN	"("
 	RPAREN	")"
+	ATSYMBL	"@"
+	SEMICLN ";"
+	QUERY 	"?"
 ;
 
 %token <z::core::string<z::utf8>> IDENTIFIER "identifier"
+%token <z::core::string<z::utf8>> TEXT "text"
 %token <int> NUMBER "number"
 %nterm <int> exp
 
@@ -47,14 +51,27 @@
 %%
 
 %start unit;
-unit: assignments exp	{ drv.result = $2; };
+unit: expressions {};
 
-assignments:
+expressions:
 	%empty {}
-	| assignments assignment {};
+	| expressions assignment {};
+	| expressions exp {};
+	| expressions printval {};
 
 assignment:
 	"identifier" ":=" exp { drv.variables[$1] = $3; };
+	| "identifier" "?" {
+		z::core::string<z::utf8> value;
+		std::cin >> value;
+		drv.variables[$1] = value.integer();
+	}
+
+printval:
+	"@" exp { std::cout << $2 << std::endl; }
+	| "@" exp ";" { std::cout << $2; }
+	| "text" { std::cout << $1 << std::endl; }
+	| "text" ";" { std::cout << $1; }
 
 %left "+" "-";
 %left "*" "/";
