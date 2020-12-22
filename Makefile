@@ -1,4 +1,4 @@
-BASE = calc++
+BASE = calc
 BISON = bison
 CXX = g++
 FLEX = flex
@@ -15,10 +15,10 @@ all: $(BASE)
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o$@ $<
 
-$(BASE): $(BASE).o driver.o parser.o scanner.o
+$(BASE): main.o driver.o parser.o scanner.o
 	$(CXX) -o $@ $^ -lzed
 
-$(BASE).o: parser.hh
+main.o: parser.hh
 parser.o: parser.hh
 scanner.o: parser.hh
 
