@@ -34,6 +34,8 @@
 	PLUS	"+"
 	STAR	"*"
 	SLASH	"/"
+	BSLASH	"\\"
+	PERC	"%"
 	LPAREN	"("
 	RPAREN	")"
 	ATSYMBL	"@"
@@ -43,28 +45,31 @@
 
 %token <z::core::string<z::utf8>> IDENTIFIER "identifier"
 %token <z::core::string<z::utf8>> TEXT "text"
-%token <int> NUMBER "number"
-%nterm <int> exp
+%token <double> NUMBER "number"
+%nterm <double> exp
+
+%left "+" "-";
+%left "*" "/" "%" "\\";
+%precedence NEGATE
 
 %printer { yyo << $$; } <*>;
 
 %%
 
 %start unit;
-unit: expressions {};
+unit: expressions;
 
 expressions:
-	%empty {}
-	| expressions assignment {};
-	| expressions exp {};
-	| expressions printval {};
+	%empty
+	| expressions assignment
+	| expressions printval
 
 assignment:
 	"identifier" ":=" exp { drv.variables[$1] = $3; };
-	| "identifier" "?" {
+	| "?" "identifier" { //input variable from stdin
 		z::core::string<z::utf8> value;
 		std::cin >> value;
-		drv.variables[$1] = value.integer();
+		drv.variables[$2] = value.integer();
 	}
 
 printval:
@@ -73,8 +78,6 @@ printval:
 	| "text" { std::cout << $1 << std::endl; }
 	| "text" ";" { std::cout << $1; }
 
-%left "+" "-";
-%left "*" "/";
 exp:
 	"number"
 	| "identifier"	{ $$ = drv.variables[$1]; }
@@ -82,6 +85,9 @@ exp:
 	| exp "-" exp	{ $$ = $1 - $3; }
 	| exp "*" exp	{ $$ = $1 * $3; }
 	| exp "/" exp	{ $$ = $1 / $3; }
+	| exp "\\" exp	{ $$ = (int)$1 / (int)$3; }
+	| exp "%" exp	{ $$ = (int)$1 % (int)$3; }
+	| "-" exp %prec NEGATE { $$ = -$2; }
 	| "(" exp ")"	{ $$ = $2; }
 %%
 

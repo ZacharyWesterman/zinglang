@@ -15,7 +15,7 @@ class driver
 public:
 	driver ();
 
-	std::map<z::core::string<z::utf8>, int> variables;
+	std::map<z::core::string<z::utf8>, double> variables;
 
 	int result;
 
