@@ -87,14 +87,38 @@ exp:
 	}
 	//Addition operators
 	| exp "+" exp {
-		$$.type = drv.symbol("add");
-		$$.subtype = drv.symbol("add");
-		$$.children = {$1, $3};
+		//fold constants
+		if ($1.valType && $3.valType)
+		{
+			$$ = $1;
+			$$.promote($3); //cast up if needed.
+			if ($$.valType == z::core::zstr::complex) $$.cval += $3.cval;
+			else if ($$.valType == z::core::zstr::floating) $$.fval += $3.fval;
+			else $$.ival += $3.ival;
+		}
+		else
+		{
+			$$.type = drv.symbol("add");
+			$$.subtype = drv.symbol("add");
+			$$.children = {$1, $3};
+		}
 	}
 	| exp "-" exp {
-		$$.type = drv.symbol("add");
-		$$.subtype = drv.symbol("sub");
-		$$.children = {$1, $3};
+		//fold constants
+		if ($1.valType && $3.valType)
+		{
+			$$ = $1;
+			$$.promote($3); //cast up if needed.
+			if ($$.valType == z::core::zstr::complex) $$.cval -= $3.cval;
+			else if ($$.valType == z::core::zstr::floating) $$.fval -= $3.fval;
+			else $$.ival -= $3.ival;
+		}
+		else
+		{
+			$$.type = drv.symbol("add");
+			$$.subtype = drv.symbol("sub");
+			$$.children = {$1, $3};
+		}
 	}
 	//Multiplication operators
 	| exp "*" exp {
@@ -123,6 +147,13 @@ exp:
 		if ($2.type == drv.symbol("negate"))
 		{
 			$$ = $2.children[0];
+		}
+		else if ($2.valType) //fold constants
+		{
+			$$ = $2;
+			if ($$.valType == z::core::zstr::complex) $$.cval = -$$.cval;
+			else if ($$.valType == z::core::zstr::floating) $$.fval = -$$.fval;
+			else $$.ival = -$$.ival;
 		}
 		else
 		{

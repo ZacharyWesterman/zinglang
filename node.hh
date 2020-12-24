@@ -21,4 +21,6 @@ struct node
 	node();
 	void print(int depth = 0) const noexcept;
 	void clear() noexcept;
+
+	void promote(node& other) noexcept;
 };

@@ -40,3 +40,38 @@ void node::clear() noexcept
 	valType = z::core::zstr::string;
 	children.clear();
 }
+
+void node::promote(node& other) noexcept
+{
+	if (valType == other.valType) return;
+
+	if (valType == z::core::zstr::complex)
+	{
+		if (other.valType == z::core::zstr::floating) other.cval = other.fval;
+		else other.cval = other.ival;
+		other.valType = valType;
+		other.subtype = subtype;
+	}
+	else if (valType == z::core::zstr::floating)
+	{
+		if (other.valType == z::core::zstr::complex)
+		{
+			cval = fval;
+			valType = other.valType;
+			subtype = other.subtype;
+		}
+		else //promote other to float
+		{
+			other.fval = other.ival;
+			other.valType = valType;
+			other.subtype = subtype;
+		}
+	}
+	else //this is int
+	{
+		if (other.valType == z::core::zstr::complex) cval = ival;
+		else fval = ival;
+		valType = other.valType;
+		subtype = other.subtype;
+	}
+}
