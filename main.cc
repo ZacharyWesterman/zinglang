@@ -7,11 +7,13 @@ int main(int argc, char *argv[])
 	driver drv;
 	for (int i = 1; i < argc; ++i)
 	{
-		const z::core::string<z::utf8> param = argv[i];
+		const zstring param = argv[i];
 		if (param == "-p")
 			drv.trace_parsing = true;
 		else if (param == "-s")
 			drv.trace_scanning = true;
+		else if (param == "-a")
+			drv.trace_ast = true;
 		else if (drv.parse (argv[i]))
 			res = 1;
 	}

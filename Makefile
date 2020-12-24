@@ -15,12 +15,13 @@ all: $(BASE)
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o$@ $<
 
-$(BASE): main.o driver.o parser.o scanner.o
+$(BASE): main.o driver.o parser.o scanner.o node.o
 	$(CXX) -o $@ $^ -lzed
 
 main.o: parser.hh
 parser.o: parser.hh
 scanner.o: parser.hh
+driver.o: parser.hh
 
 html: parser.html
 %.html: %.xml

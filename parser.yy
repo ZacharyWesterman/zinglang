@@ -7,10 +7,11 @@
 %define api.token.constructor
 %define api.value.type variant
 %define parse.assert
-%define api.filename.type {z::core::string<z::utf8>}
+%define api.filename.type {zstring}
 
 %code requires {
-	# include <z/core/string.hpp>
+	#include <z/core/string.hpp>
+	#include "node.hh"
 	class driver;
 }
 
@@ -24,70 +25,111 @@
 %define parse.lac full
 
 %code {
-#include "driver.hh"
+	#include "driver.hh"
 }
 
 %define api.token.prefix {TOK_}
 %token
-	ASSIGN	":="
-	MINUS	"-"
 	PLUS	"+"
+	MINUS	"-"
 	STAR	"*"
 	SLASH	"/"
 	BSLASH	"\\"
 	PERC	"%"
 	LPAREN	"("
 	RPAREN	")"
-	ATSYMBL	"@"
-	SEMICLN ";"
-	QUERY 	"?"
 ;
 
-%token <z::core::string<z::utf8>> IDENTIFIER "identifier"
-%token <z::core::string<z::utf8>> TEXT "text"
-%token <double> NUMBER "number"
-%nterm <double> exp
+%token <zstring> IDENTIFIER "identifier"
+%token <long> INT "int"
+%token <double> FLOAT "float"
+%token <std::complex<double>> COMPLEX "complex"
+%nterm <node> exp
 
 %left "+" "-";
 %left "*" "/" "%" "\\";
 %precedence NEGATE
 
-%printer { yyo << $$; } <*>;
+%printer { yyo << $$; } <*>
+%printer { yyo << $$.type; } <node>;
 
 %%
 
 %start unit;
-unit: expressions;
 
-expressions:
-	%empty
-	| expressions assignment
-	| expressions printval
+unit:
+	exp { drv.ast = $1; }
 
-assignment:
-	"identifier" ":=" exp { drv.variables[$1] = $3; };
-	| "?" "identifier" { //input variable from stdin
-		z::core::string<z::utf8> value;
-		std::cin >> value;
-		drv.variables[$2] = value.integer();
-	}
-
-printval:
-	"@" exp { std::cout << $2 << std::endl; }
-	| "@" exp ";" { std::cout << $2; }
-	| "text" { std::cout << $1 << std::endl; }
-	| "text" ";" { std::cout << $1; }
-
+//Mathematical expressions
 exp:
-	"number"
-	| "identifier"	{ $$ = drv.variables[$1]; }
-	| exp "+" exp	{ $$ = $1 + $3; }
-	| exp "-" exp	{ $$ = $1 - $3; }
-	| exp "*" exp	{ $$ = $1 * $3; }
-	| exp "/" exp	{ $$ = $1 / $3; }
-	| exp "\\" exp	{ $$ = (int)$1 / (int)$3; }
-	| exp "%" exp	{ $$ = (int)$1 % (int)$3; }
-	| "-" exp %prec NEGATE { $$ = -$2; }
+	// Raw values
+	"identifier" {
+		$$.type = drv.symbol("var");
+		$$.text = drv.symbol($1);
+	}
+	| "int" {
+		$$.type = drv.symbol("const");
+		$$.subtype = drv.symbol("int");
+		$$.ival = $1;
+		$$.valType = z::core::zstr::integer;
+	}
+	| "float" {
+		$$.type = drv.symbol("const");
+		$$.subtype = drv.symbol("float");
+		$$.fval = $1;
+		$$.valType = z::core::zstr::floating;
+	}
+	| "complex" {
+		$$.type = drv.symbol("const");
+		$$.subtype = drv.symbol("complex");
+		$$.cval = $1;
+		$$.valType = z::core::zstr::complex;
+	}
+	//Addition operators
+	| exp "+" exp {
+		$$.type = drv.symbol("add");
+		$$.subtype = drv.symbol("add");
+		$$.children = {$1, $3};
+	}
+	| exp "-" exp {
+		$$.type = drv.symbol("add");
+		$$.subtype = drv.symbol("sub");
+		$$.children = {$1, $3};
+	}
+	//Multiplication operators
+	| exp "*" exp {
+		$$.type = drv.symbol("mult");
+		$$.subtype = drv.symbol("mult");
+		$$.children = {$1, $3};
+	}
+	| exp "/" exp {
+		$$.type = drv.symbol("mult");
+		$$.subtype = drv.symbol("div");
+		$$.children = {$1, $3};
+	}
+	| exp "\\" exp {
+		$$.type = drv.symbol("mult");
+		$$.subtype = drv.symbol("idiv");
+		$$.children = {$1, $3};
+	}
+	| exp "%" exp {
+		$$.type = drv.symbol("mult");
+		$$.subtype = drv.symbol("mod");
+		$$.children = {$1, $3};
+	}
+	//Unary operators
+	| "-" exp %prec NEGATE {
+		//fold any redundant negate operations
+		if ($2.type == drv.symbol("negate"))
+		{
+			$$ = $2.children[0];
+		}
+		else
+		{
+			$$.type = drv.symbol("negate");
+			$$.children = {$2};
+		}
+	}
 	| "(" exp ")"	{ $$ = $2; }
 %%
 

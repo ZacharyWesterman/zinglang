@@ -1,8 +1,9 @@
 #pragma once
 
 #include <z/core/string.hpp>
-#include <map>
+#include <z/core/sortedRefArray.hpp>
 #include "parser.hh"
+#include "node.hh"
 
 // Give Flex the prototype of yylex we want ...
 #define YY_DECL yy::parser::symbol_type yylex (driver& drv)
@@ -14,15 +15,16 @@ class driver
 {
 public:
 	driver ();
+	~driver();
 
-	std::map<z::core::string<z::utf8>, double> variables;
+	z::core::sortedRefArray<zstring*> symtab;
 
 	int result;
 
 	// Run the parser on file F. Return 0 on success.
-	int parse (const z::core::string<z::utf8>& f);
+	int parse (const zstring& f);
 	// The name of the file being parsed.
-	z::core::string<z::utf8> file;
+	zstring file;
 	// Whether to generate parser debug traces.
 	bool trace_parsing;
 
@@ -31,6 +33,14 @@ public:
 	void scan_end ();
 	// Whether to generate scanner debug traces.
 	bool trace_scanning;
+
+	// Whether to list the AST after parsing.
+	bool trace_ast;
+
+	node ast; //abstract syntax tree
+
 	// The token's location used by the scanner.
 	yy::location location;
+
+	zstring* symbol(const zstring&) noexcept;
 };
