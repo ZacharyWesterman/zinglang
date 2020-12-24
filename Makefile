@@ -1,67 +1,33 @@
-NAME = zasm
+BASE = calc
+BISON = bison
+CXX = g++
+FLEX = flex
+XSLTPROC = xsltproc
 
-SRCS = $(wildcard *.cpp)
-OBJS = $(patsubst %.cpp,%.o,$(SRCS))
+all: $(BASE)
 
-ARCH = $(shell g++ -dumpmachine)
+%.cc %.hh %.xml %.gv: %.yy
+	$(BISON) $(BISONFLAGS) --xml --graph=$*.gv -o $*.cc $<
 
-ifeq ($(findstring x86_64,$(ARCH)),x86_64)
-CCTARGET = -m64
-else
-ifeq ($(findstring i686,$(ARCH)),i686)
-CCTARGET = -m32
-else
-CCTARGET =
-endif
-endif
+%.cc: %.ll
+	$(FLEX) $(FLEXFLAGS) -o$@ $<
 
-INCLUDE = -I"../libzed" -I"../zing"
-CFLAGS = $(INCLUDE) -std=c++11 -W -Wall -Wextra -pedantic -fexceptions
-LFLAGS = -shared -lzed -Wl,--no-undefined
+%.o: %.cc
+	$(CXX) $(CXXFLAGS) -c -o$@ $<
 
-# opt defaults to -O3
-ifndef OPT
-OLEVEL = 3
-endif
+$(BASE): main.o driver.o parser.o scanner.o node.o
+	$(CXX) -o $@ $^ -lzed
 
-#if opt flag is true
-ifneq (,$(findstring $(OPT),S size Size SIZE))
-OLEVEL = s
-endif
+main.o: parser.hh
+parser.o: parser.hh
+scanner.o: parser.hh
+driver.o: parser.hh
 
-# if debug flag is false
-ifeq (,$(findstring $(DEBUG),1 true True TRUE))
-CFLAGS += -O$(OLEVEL) -g0
-else
-CFLAGS += -g3 -O$(OLEVEL) -DDEBUG
-endif
+html: parser.html
+%.html: %.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) -o $@ $$($(BISON) --print-datadir)/xslt/xml2xhtml.xsl $<
 
-ifeq ($(OS),Windows_NT)
-LFLAGS += -L.
-SONAME = $(NAME).exe
-RMOBJS = $(subst /,\,$(OBJS))
-RM = del
-else
-SONAME = $(NAME).so
-RMOBJS = $(OBJS)
-RM = rm -f
-endif
-
-CC = g++
-LN = g++
-
-default: $(SONAME)
-
-$(SONAME): $(OBJS)
-	$(LN) $(LFLAGS) -o $@ $^
-
-lang.o: lang.cpp
-	$(CC) $(CFLAGS) -fPIC -o $@ -c $^
-
-%.o: %.cpp %.h
-	$(CC) $(CFLAGS) -fPIC -o $@ -c $<
+CLEANFILES = $(BASE) *.o parser.hh parser.cc parser.output parser.xml parser.html parser.gv location.hh	scanner.cc
 
 clean:
-	rm -f *.o *.so
-
-.PHONY: default clean
+	rm -f $(CLEANFILES)

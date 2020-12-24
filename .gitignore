@@ -1,2 +1,10 @@
+calc
 *.o
-*.so
+*.html
+parser.cc
+parser.hh
+parser.xml
+parser.gv
+stack.hh
+location.hh
+position.hh
