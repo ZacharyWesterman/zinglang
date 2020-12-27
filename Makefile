@@ -5,10 +5,9 @@ FLEX = flex
 XSLTPROC = xsltproc
 
 STD = c++11
-CFLAGS = -std=$(STD) \
+CCFLAGS = -std=$(STD) \
 	-W -Wall -Wextra -pedantic -fexceptions -Wno-psabi \
 	-fdata-sections -ffunction-sections
-LFLAGS = -lzed -Wl,--gc-sections
 
 all: $(BASE)
 
@@ -19,10 +18,10 @@ all: $(BASE)
 	$(FLEX) $(FLEXFLAGS) -o$@ $<
 
 %.o: %.cc
-	$(CC) $(CFLAGS) -c -o$@ $<
+	$(CC) $(CCFLAGS) $(CFLAGS) -c -o$@ $<
 
 $(BASE): main.o driver.o parser.o scanner.o node.o
-	$(CC) -o $@ $^ $(LFLAGS)
+	$(CC) -o $@ $^ $(LFLAGS) -lzed -Wl,--gc-sections
 
 main.o: parser.hh
 parser.o: parser.hh
