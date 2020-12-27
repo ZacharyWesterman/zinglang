@@ -6,7 +6,7 @@ XSLTPROC = xsltproc
 
 STD = c++11
 CFLAGS = -std=$(STD) \
-	-W -Wall -Wextra -pedantic -fexceptions \
+	-W -Wall -Wextra -pedantic -fexceptions -Wno-psabi \
 	-fdata-sections -ffunction-sections
 LFLAGS = -lzed -Wl,--gc-sections
 
