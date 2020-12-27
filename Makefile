@@ -1,8 +1,14 @@
 BASE = calc
 BISON = bison
-CXX = g++
+CC = g++
 FLEX = flex
 XSLTPROC = xsltproc
+
+STD = c++11
+CFLAGS = -std=$(STD) \
+	-W -Wall -Wextra -pedantic -fexceptions \
+	-fdata-sections -ffunction-sections
+LFLAGS = -lzed -Wl,--gc-sections
 
 all: $(BASE)
 
@@ -13,10 +19,10 @@ all: $(BASE)
 	$(FLEX) $(FLEXFLAGS) -o$@ $<
 
 %.o: %.cc
-	$(CXX) $(CXXFLAGS) -c -o$@ $<
+	$(CC) $(CFLAGS) -c -o$@ $<
 
 $(BASE): main.o driver.o parser.o scanner.o node.o
-	$(CXX) -o $@ $^ -lzed
+	$(CC) -o $@ $^ $(LFLAGS)
 
 main.o: parser.hh
 parser.o: parser.hh
