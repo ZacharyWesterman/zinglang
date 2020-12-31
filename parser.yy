@@ -70,31 +70,25 @@ exp:
 	| "int" {
 		$$.type = drv.symbol("const");
 		$$.subtype = drv.symbol("int");
-		$$.ival = $1;
-		$$.valType = z::core::zstr::integer;
+		$$.value = $1;
 	}
 	| "float" {
 		$$.type = drv.symbol("const");
 		$$.subtype = drv.symbol("float");
-		$$.fval = $1;
-		$$.valType = z::core::zstr::floating;
+		$$.value = $1;
 	}
 	| "complex" {
 		$$.type = drv.symbol("const");
 		$$.subtype = drv.symbol("complex");
-		$$.cval = $1;
-		$$.valType = z::core::zstr::complex;
+		$$.value = $1;
 	}
 	//Addition operators
 	| exp "+" exp {
 		//fold constants
-		if ($1.valType && $3.valType)
+		if ($1.value.type() && $3.value.type())
 		{
 			$$ = $1;
-			$$.promote($3); //cast up if needed.
-			if ($$.valType == z::core::zstr::complex) $$.cval += $3.cval;
-			else if ($$.valType == z::core::zstr::floating) $$.fval += $3.fval;
-			else $$.ival += $3.ival;
+			$$.value += $3.value;
 		}
 		else
 		{
@@ -105,13 +99,10 @@ exp:
 	}
 	| exp "-" exp {
 		//fold constants
-		if ($1.valType && $3.valType)
+		if ($1.value.type() && $3.value.type())
 		{
 			$$ = $1;
-			$$.promote($3); //cast up if needed.
-			if ($$.valType == z::core::zstr::complex) $$.cval -= $3.cval;
-			else if ($$.valType == z::core::zstr::floating) $$.fval -= $3.fval;
-			else $$.ival -= $3.ival;
+			$$.value -= $3.value;
 		}
 		else
 		{
@@ -148,12 +139,10 @@ exp:
 		{
 			$$ = $2.children[0];
 		}
-		else if ($2.valType) //fold constants
+		else if ($2.value.type()) //fold constants
 		{
 			$$ = $2;
-			if ($$.valType == z::core::zstr::complex) $$.cval = -$$.cval;
-			else if ($$.valType == z::core::zstr::floating) $$.fval = -$$.fval;
-			else $$.ival = -$$.ival;
+			$$.value = -$$.value;
 		}
 		else
 		{

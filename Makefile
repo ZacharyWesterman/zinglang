@@ -4,7 +4,7 @@ CC = g++
 FLEX = flex
 XSLTPROC = xsltproc
 
-STD = c++11
+STD = c++17
 CCFLAGS = -std=$(STD) \
 	-W -Wall -Wextra -pedantic -fexceptions -Wno-psabi \
 	-fdata-sections -ffunction-sections
