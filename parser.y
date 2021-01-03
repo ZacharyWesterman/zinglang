@@ -110,24 +110,69 @@ exp:
 	}
 	//Multiplication operators
 	| exp "*" exp {
-		$$.type = drv.symbol("mult");
-		$$.subtype = drv.symbol("mult");
-		$$.children = {$1, $3};
+		//fold constants
+		if ($1.value.type() && $3.value.type())
+		{
+			$$ = $1;
+			$$.value *= $3.value;
+		}
+		else
+		{
+			$$.type = drv.symbol("mult");
+			$$.subtype = drv.symbol("mult");
+			$$.children = {$1, $3};
+		}
 	}
 	| exp "/" exp {
-		$$.type = drv.symbol("mult");
-		$$.subtype = drv.symbol("div");
-		$$.children = {$1, $3};
+		//check for div by 0, but continue to form AST.
+		bool zero = $3.value.complex() == 0.0;
+		if (zero) error(@$, "division by zero");
+		//fold constants
+		if (!zero && $1.value.type() && $3.value.type())
+		{
+			$$ = $1;
+			$$.value /= $3.value;
+		}
+		else
+		{
+			$$.type = drv.symbol("mult");
+			$$.subtype = drv.symbol("div");
+			$$.children = {$1, $3};
+		}
 	}
 	| exp "\\" exp {
-		$$.type = drv.symbol("mult");
-		$$.subtype = drv.symbol("idiv");
-		$$.children = {$1, $3};
+		//check for div by 0, but continue to form AST.
+		bool zero = $3.value.complex() == 0.0;
+		if (zero) error(@$, "division by zero");
+		//fold constants
+		if (!zero && $1.value.type() && $3.value.type())
+		{
+			$$ = $1;
+			$$.value = long($$.value) / long($3.value);
+		}
+		else
+		{
+			$$.type = drv.symbol("mult");
+			$$.subtype = drv.symbol("idiv");
+			$$.children = {$1, $3};
+		}
 	}
 	| exp "%" exp {
-		$$.type = drv.symbol("mult");
-		$$.subtype = drv.symbol("mod");
-		$$.children = {$1, $3};
+		//check for div by 0, but continue to form AST.
+		bool zero = $3.value.complex() == 0.0;
+		if (zero) error(@$, "division by zero");
+		//fold constants
+		if (!zero && $1.value.type() && $3.value.type())
+		{
+			$$ = $1;
+			$$.value %= $3.value;
+		}
+		else
+		{
+			$$.type = drv.symbol("mult");
+			$$.subtype = drv.symbol("mod");
+			$$.children = {$1, $3};
+		}
 	}
 	//Unary operators
 	| "-" exp %prec NEGATE {
