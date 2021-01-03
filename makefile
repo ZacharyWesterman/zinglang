@@ -11,10 +11,10 @@ CCFLAGS = -std=$(STD) \
 
 all: $(BASE)
 
-%.cc %.hh %.xml %.gv: %.yy
+%.cc %.hh %.xml %.gv: %.y
 	$(BISON) $(BISONFLAGS) --xml --graph=$*.gv -o $*.cc $<
 
-%.cc: %.ll
+%.cc: %.l
 	$(FLEX) $(FLEXFLAGS) -o$@ $<
 
 %.o: %.cc

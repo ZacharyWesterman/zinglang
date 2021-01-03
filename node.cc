@@ -16,7 +16,7 @@ void node::print(int depth) const noexcept
 		if (text) std::cout << " \"" << *text << '"';
 		if (value.numeric())
 		{
-			std::cout << ' ' << value.toString();
+			std::cout << " [" << value.typeString() << "] " << value.toString();
 		}
 	}
 	std::cout << std::endl;

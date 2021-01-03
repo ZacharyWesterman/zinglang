@@ -69,17 +69,14 @@ exp:
 	}
 	| "int" {
 		$$.type = drv.symbol("const");
-		$$.subtype = drv.symbol("int");
 		$$.value = $1;
 	}
 	| "float" {
 		$$.type = drv.symbol("const");
-		$$.subtype = drv.symbol("float");
 		$$.value = $1;
 	}
 	| "complex" {
 		$$.type = drv.symbol("const");
-		$$.subtype = drv.symbol("complex");
 		$$.value = $1;
 	}
 	//Addition operators
