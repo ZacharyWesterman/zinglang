@@ -14,7 +14,7 @@ void node::print(int depth) const noexcept
 		std::cout << indent << *type;
 		if (subtype) std::cout << " (" << *subtype << ")";
 		if (text) std::cout << " \"" << *text << '"';
-		if (value.numeric())
+		if (value.type())
 		{
 			std::cout << " [" << value.typeString() << "] " << value.toString();
 		}

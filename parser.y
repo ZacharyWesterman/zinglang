@@ -30,22 +30,29 @@
 
 %define api.token.prefix {TOK_}
 %token
-	PLUS	"+"
-	MINUS	"-"
-	STAR	"*"
-	SLASH	"/"
-	BSLASH	"\\"
-	PERC	"%"
+	EQUALS	"="
+	PLUS		"+"
+	MINUS		"-"
+	STAR		"*"
+	SLASH		"/"
+	PERC		"%"
 	LPAREN	"("
 	RPAREN	")"
+	SEMICOL	";"
+	LBRACE "{"
+	RBRACE "}"
 ;
 
 %token <zstring> IDENTIFIER "identifier"
 %token <long> INT "int"
 %token <double> FLOAT "float"
 %token <std::complex<double>> COMPLEX "complex"
-%nterm <node> exp
+%token <zstring> STRING "string"
 
+%nterm <node> exp value stmt stmtlist
+
+%precedence STMT
+%left "="
 %left "+" "-";
 %left "*" "/" "%" "\\";
 %precedence NEGATE
@@ -58,11 +65,24 @@
 %start unit;
 
 unit:
-	exp { drv.ast = $1; }
+	stmtlist { drv.ast = $1; }
 
-//Mathematical expressions
-exp:
-	// Raw values
+stmtlist:
+	stmt {
+		$$.type = drv.symbol("stmt");
+		$$.children.add($1);
+	}
+	| stmtlist stmt {
+		$$ = $1;
+		$$.children.add($2);
+	}
+
+stmt:
+	exp ";"
+	| "{" stmtlist "}" { $$ = $2; }
+
+//Expression values
+value:
 	"identifier" {
 		$$.type = drv.symbol("var");
 		$$.text = drv.symbol($1);
@@ -79,10 +99,24 @@ exp:
 		$$.type = drv.symbol("const");
 		$$.value = $1;
 	}
+	| "string" {
+		$$.type = drv.symbol("const");
+		$$.value = $1;
+	}
+
+//Expressions
+exp:
+	value { $$ = $1; }
+	//Assignment
+	| "identifier" "=" exp {
+		$$.type = drv.symbol("assign");
+		$$.text = drv.symbol($1);
+		$$.children = {$3};
+	}
 	//Addition operators
 	| exp "+" exp {
 		//fold constants
-		if ($1.value.type() && $3.value.type())
+		if ($1.value.numeric() && $3.value.numeric())
 		{
 			$$ = $1;
 			$$.value += $3.value;
@@ -96,7 +130,7 @@ exp:
 	}
 	| exp "-" exp {
 		//fold constants
-		if ($1.value.type() && $3.value.type())
+		if ($1.value.numeric() && $3.value.numeric())
 		{
 			$$ = $1;
 			$$.value -= $3.value;
@@ -111,7 +145,7 @@ exp:
 	//Multiplication operators
 	| exp "*" exp {
 		//fold constants
-		if ($1.value.type() && $3.value.type())
+		if ($1.value.numeric() && $3.value.numeric())
 		{
 			$$ = $1;
 			$$.value *= $3.value;
@@ -126,9 +160,9 @@ exp:
 	| exp "/" exp {
 		//check for div by 0, but continue to form AST.
 		bool zero = $3.value.complex() == 0.0;
-		if (zero) error(@$, "division by zero");
+		if (zero && $3.value.numeric()) error(@$, "division by zero");
 		//fold constants
-		if (!zero && $1.value.type() && $3.value.type())
+		if (!zero && $1.value.numeric() && $3.value.numeric())
 		{
 			$$ = $1;
 			$$.value /= $3.value;
@@ -140,29 +174,12 @@ exp:
 			$$.children = {$1, $3};
 		}
 	}
-	| exp "\\" exp {
-		//check for div by 0, but continue to form AST.
-		bool zero = $3.value.complex() == 0.0;
-		if (zero) error(@$, "division by zero");
-		//fold constants
-		if (!zero && $1.value.type() && $3.value.type())
-		{
-			$$ = $1;
-			$$.value = long($$.value) / long($3.value);
-		}
-		else
-		{
-			$$.type = drv.symbol("mult");
-			$$.subtype = drv.symbol("idiv");
-			$$.children = {$1, $3};
-		}
-	}
 	| exp "%" exp {
 		//check for div by 0, but continue to form AST.
 		bool zero = $3.value.complex() == 0.0;
-		if (zero) error(@$, "division by zero");
+		if (zero && $3.value.numeric()) error(@$, "division by zero");
 		//fold constants
-		if (!zero && $1.value.type() && $3.value.type())
+		if (!zero && $1.value.numeric() && $3.value.numeric())
 		{
 			$$ = $1;
 			$$.value %= $3.value;
@@ -181,7 +198,7 @@ exp:
 		{
 			$$ = $2.children[0];
 		}
-		else if ($2.value.type()) //fold constants
+		else if ($2.value.numeric()) //fold constants
 		{
 			$$ = $2;
 			$$.value = -$$.value;
